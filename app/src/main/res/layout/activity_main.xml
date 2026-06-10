@@ -13,25 +13,11 @@
         android:textStyle="bold"
         android:paddingBottom="8dp" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Prefijo de SALA (p. ej. SALA, S-, ROOM)">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPrefix"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="SALA"
-            android:inputType="textCapCharacters"
-            android:maxLines="1" />
-    </com.google.android.material.textfield.TextInputLayout>
-
     <TextView
         android:id="@+id/tvCurrentRoom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="8dp"
+        android:paddingTop="4dp"
         android:textSize="16sp"
         android:textStyle="bold"
         android:text="Sala activa: (ninguna)" />
@@ -41,24 +27,34 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="2dp"
-        android:paddingBottom="8dp"
+        android:paddingBottom="12dp"
         android:textSize="14sp"
         android:text="Objetos registrados: 0" />
 
     <Button
-        android:id="@+id/btnScan"
+        android:id="@+id/btnScanRoom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="ESCANEAR CÓDIGO"
-        android:textSize="18sp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp" />
+        android:text="1 · ESCANEAR SALA"
+        android:textSize="16sp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnScanObject"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="2 · ESCANEAR OBJETO"
+        android:textSize="16sp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingTop="4dp"
+        android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
         <Button
