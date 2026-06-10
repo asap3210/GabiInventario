@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,12 +33,15 @@ public class MainActivity extends AppCompatActivity {
     private InventoryDbHelper db;
     private InventoryAdapter adapter;
 
-    private EditText etPrefix;
     private TextView tvCurrentRoom;
     private TextView tvCount;
 
     // Sala activa: los objetos escaneados se asignan a esta sala.
     private String currentRoom = null;
+
+    // Qué estamos escaneando ahora: SALA u OBJETO (lo elige el botón pulsado).
+    private enum Mode { ROOM, OBJECT }
+    private Mode pendingMode = Mode.OBJECT;
 
     private final SimpleDateFormat ts =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
@@ -48,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private final ActivityResultLauncher<ScanOptions> scanLauncher =
             registerForActivityResult(new ScanContract(), result -> {
                 if (result.getContents() != null) {
-                    handleScan(result.getContents().trim());
+                    handleScan(result.getContents().trim(), pendingMode);
                 }
             });
 
@@ -68,11 +70,11 @@ public class MainActivity extends AppCompatActivity {
 
         db = new InventoryDbHelper(this);
 
-        etPrefix = findViewById(R.id.etPrefix);
         tvCurrentRoom = findViewById(R.id.tvCurrentRoom);
         tvCount = findViewById(R.id.tvCount);
 
-        Button btnScan = findViewById(R.id.btnScan);
+        Button btnScanRoom = findViewById(R.id.btnScanRoom);
+        Button btnScanObject = findViewById(R.id.btnScanObject);
         Button btnExport = findViewById(R.id.btnExport);
         Button btnClear = findViewById(R.id.btnClear);
 
@@ -81,7 +83,8 @@ public class MainActivity extends AppCompatActivity {
         adapter = new InventoryAdapter();
         rv.setAdapter(adapter);
 
-        btnScan.setOnClickListener(v -> checkPermissionAndScan());
+        btnScanRoom.setOnClickListener(v -> { pendingMode = Mode.ROOM; checkPermissionAndScan(); });
+        btnScanObject.setOnClickListener(v -> { pendingMode = Mode.OBJECT; checkPermissionAndScan(); });
         btnExport.setOnClickListener(v -> exportCsv());
         btnClear.setOnClickListener(v -> confirmClear());
 
@@ -100,28 +103,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void launchScanner() {
         ScanOptions options = new ScanOptions();
-        options.setPrompt("Apunta al código (sala u objeto)");
+        options.setPrompt(pendingMode == Mode.ROOM
+                ? "Escanea el código de la SALA"
+                : "Escanea el código del OBJETO");
         options.setBeepEnabled(true);
         options.setOrientationLocked(true);
-        // Acepta tanto códigos de barras 1D como QR.
+        // Acepta tanto códigos de barras 1D (Code 39, Code 128, etc.) como QR.
         options.setDesiredBarcodeFormats(ScanOptions.ALL_CODE_TYPES);
         scanLauncher.launch(options);
     }
 
-    /**
-     * Decide si el código escaneado es una SALA o un OBJETO según el prefijo configurado,
-     * y actúa en consecuencia.
-     */
-    private void handleScan(String code) {
+    /** Según el botón pulsado, trata el código como SALA o como OBJETO. */
+    private void handleScan(String code, Mode mode) {
         if (TextUtils.isEmpty(code)) return;
-
-        String prefix = etPrefix.getText().toString().trim();
-        if (TextUtils.isEmpty(prefix)) prefix = "SALA";
-
-        boolean isRoom = code.toUpperCase(Locale.ROOT)
-                .startsWith(prefix.toUpperCase(Locale.ROOT));
-
-        if (isRoom) {
+        if (mode == Mode.ROOM) {
             currentRoom = code;
             updateCurrentRoomLabel();
             Toast.makeText(this, "Sala activa: " + code, Toast.LENGTH_SHORT).show();
@@ -134,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         if (currentRoom == null) {
             new AlertDialog.Builder(this)
                     .setTitle("Sin sala activa")
-                    .setMessage("Primero escanea un código de SALA (que empiece por el prefijo) "
+                    .setMessage("Primero pulsa \"ESCANEAR SALA\" y lee el código de la sala "
                             + "para indicar dónde está el objeto.")
                     .setPositiveButton("Entendido", null)
                     .show();
@@ -236,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** Escapa un valor para CSV (comillas si contiene coma, comillas o salto de línea). */
+    /** Escapa un valor para CSV. */
     private String csv(String s) {
         if (s == null) return "";
         if (s.contains(",") || s.contains("\"") || s.contains("\n")) {
